@@ -1,44 +1,49 @@
+#define F_CPU 16000000UL //frequência de trabalho
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 
-#define tst_bit(Y,bit_x) (Y&(1<<bit_x))
+//Definições de macros para o trabalho com bits .
+#define set_bit(y,bit) (y|=(1<<bit))  //coloca em 1 o bit x da variável Y
+#define clr_bit(y,bit) (y&=~(1<<bit)) //coloca em 0 o bit x da variável Y
+#define cpl_bit(y,bit) (y^=(1<<bit))  //troca o estado lógico do bit x da variável Y
+#define tst_bit(y,bit) (y&(1<<bit))   //retorna 0 ou 1 conforme leitura do bit
+
 
 int main()
 {
   // Configuração do timer1
-  cli();                             //Disable global interrupts
-  TCCR1A = 0;                        //confira timer para operação normal pinos OC1A e OC1B desconectados
-  TCCR1B = 0;                        //limpa registrador
-  TCCR1B |= (1<<CS10)|(1 << CS12);   // configura prescaler para 1024: CS12 = 1 e CS10 = 1
-
-  TCNT1 = 0xC2F7;                    // incia timer com valor para que estouro ocorra em 1 segundo
-                                     // 65536-(16MHz/1024/1Hz) = 49911 = 0xC2F7
-  TIMSK1 |= (1 << TOIE1);            // habilita a interrupção do TIMER1
-
+  cli();  //Disable global interrupts
   // Enable PCIE2 Bit3 = 1 (Port D)
   // Pin Change Interrupt Control Register
   PCICR |= (1<<PCIE2);
   // Select PCINT23 Bit 7 = 1 (Port D7)
   PCMSK2 |= (1<<PCINT23) | (1<<PCINT18);
-  sei();                             // habilita interrupções globais
 
   //Setup the I/O for the LED
-  DDRB |= (1<<DDB5) | (1<<DDB3);     //Set PortB Pin5 and Pin3 as an output
-  DDRD |= (0<<DDD7) | (0<<DDD2);     //Set PortD Pin7 as an input
+  DDRB = 0b00101000;    //Set PortB Pin5 and Pin3 as an output
+  PORTB = 0x00;   //Apaga os LEDS
+  DDRD = 0x00;   //Set PortD as an input
+  PORTD = 0xFF;  //Enable pull-up resistors on PortD
+  sei();   // habilita interrupções globais
 
-  while(1) {}  //Loop forever, interrupts do the rest
+  while(1) {}  //Loop forever, interrupts do the restde v swe
 }
 
+// Interrupt Service Routine
 ISR(PCINT2_vect)
 {
-  if (tst_bit(PIND,7))
-  {
-    PORTB ^= (1<<PORTB5);
-  }
 
-  if (tst_bit(PIND,2))
+  if (!tst_bit(PIND,PD7))
   {
-    PORTB ^= (1<<PORTB3);
+    cpl_bit(PORTB,PB5);
   }
+  else if (!tst_bit(PIND,PD2))
+  {
+    cpl_bit(PORTB,PB3);
+  }
+  _delay_ms(200);
+
 }
 
