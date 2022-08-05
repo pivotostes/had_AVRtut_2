@@ -1,0 +1,182 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 104               		.section	.text.startup,"ax",@progbits
+ 106               	.global	main
+ 108               	main:
+ 109               		.stabd	46,0,0
+   1:main.c        **** #include <avr/io.h>
+   2:main.c        **** #include <avr/interrupt.h>
+   3:main.c        **** 
+   4:main.c        **** int main(void)
+   5:main.c        **** {
+ 111               	.LM0:
+ 112               	.LFBB1:
+ 113               	/* prologue: function */
+ 114               	/* frame size = 0 */
+ 115               	/* stack size = 0 */
+ 116               	.L__stack_usage = 0
+   6:main.c        **** /*   //Setup the clock
+   7:main.c        ****   cli();			//Disable global interrupts
+   8:main.c        ****   TCCR1B |= 1<<CS11 | 1<<CS10;	//Divide by 64
+   9:main.c        ****   OCR1A = 15624;		//Count 15624 cycles for 1 second interrupt
+  10:main.c        ****   TCCR1B |= 1<<WGM12;		//Put Timer/Counter1 in CTC mode
+  11:main.c        ****   TIMSK1 |= 1<<OCIE1A;		//enable timer compare interrupt
+  12:main.c        ****   sei();			//Enable global interrupts */
+  13:main.c        **** 
+  14:main.c        ****   // Configuração do timer1
+  15:main.c        ****   cli();                       			 //Disable global interrupts
+ 118               	.LM1:
+ 119               	/* #APP */
+ 120               	 ;  15 "main.c" 1
+ 121 0000 F894      		cli
+ 122               	 ;  0 "" 2
+  16:main.c        ****   TCCR1A = 0;                        //confira timer para operação normal pinos OC1A e OC1B desco
+ 124               	.LM2:
+ 125               	/* #NOAPP */
+ 126 0002 1092 8000 		sts 128,__zero_reg__
+  17:main.c        ****   TCCR1B = 0;                        //limpa registrador
+ 128               	.LM3:
+ 129 0006 1092 8100 		sts 129,__zero_reg__
+  18:main.c        ****   TCCR1B |= (1<<CS10)|(1 << CS12);   // configura prescaler para 1024: CS12 = 1 e CS10 = 1
+ 131               	.LM4:
+ 132 000a 8091 8100 		lds r24,129
+ 133 000e 8560      		ori r24,lo8(5)
+ 134 0010 8093 8100 		sts 129,r24
+  19:main.c        **** 
+  20:main.c        ****   TCNT1 = 0xC2F7;                    // incia timer com valor para que estouro ocorra em 1 segundo
+ 136               	.LM5:
+ 137 0014 87EF      		ldi r24,lo8(-9)
+ 138 0016 92EC      		ldi r25,lo8(-62)
+ 139 0018 9093 8500 		sts 132+1,r25
+ 140 001c 8093 8400 		sts 132,r24
+  21:main.c        ****                                      // 65536-(16MHz/1024/1Hz) = 49911 = 0xC2F7
+  22:main.c        **** 
+  23:main.c        ****   TIMSK1 |= (1 << TOIE1);            // habilita a interrupção do TIMER1
+ 142               	.LM6:
+ 143 0020 8091 6F00 		lds r24,111
+ 144 0024 8160      		ori r24,lo8(1)
+ 145 0026 8093 6F00 		sts 111,r24
+  24:main.c        ****   sei();                             // habilita interrupções globais
+ 147               	.LM7:
+ 148               	/* #APP */
+ 149               	 ;  24 "main.c" 1
+ 150 002a 7894      		sei
+ 151               	 ;  0 "" 2
+  25:main.c        **** 
+  26:main.c        ****   //Setup the I/O for the LED
+  27:main.c        **** 
+  28:main.c        ****   DDRB |= (1<<5);		//Set PortB Pin5 as an output
+ 153               	.LM8:
+ 154               	/* #NOAPP */
+ 155 002c 259A      		sbi 0x4,5
+  29:main.c        ****   PORTB |= (1<<5);		//Set PortB Pin5 high to turn on LED
+ 157               	.LM9:
+ 158 002e 2D9A      		sbi 0x5,5
+ 159               	.L2:
+ 160 0030 00C0      		rjmp .L2
+ 162               	.Lscope1:
+ 164               		.stabd	78,0,0
+ 165               		.text
+ 167               	.global	__vector_11
+ 169               	__vector_11:
+ 170               		.stabd	46,0,0
+  30:main.c        **** 
+  31:main.c        ****   while(1) { }			//Loop forever, interrupts do the rest
+  32:main.c        **** }
+  33:main.c        **** 
+  34:main.c        **** ISR(TIMER1_COMPA_vect)		//Interrupt Service Routine
+  35:main.c        **** {
+ 172               	.LM10:
+ 173               	.LFBB2:
+ 174 0000 1F92      		push r1
+ 175 0002 0F92      		push r0
+ 176 0004 0FB6      		in r0,__SREG__
+ 177 0006 0F92      		push r0
+ 178 0008 1124      		clr __zero_reg__
+ 179 000a 8F93      		push r24
+ 180 000c 9F93      		push r25
+ 181               	/* prologue: Signal */
+ 182               	/* frame size = 0 */
+ 183               	/* stack size = 5 */
+ 184               	.L__stack_usage = 5
+  36:main.c        ****   PORTB ^= (1<<5);		//Use xor to toggle the LED
+ 186               	.LM11:
+ 187 000e 95B1      		in r25,0x5
+ 188 0010 80E2      		ldi r24,lo8(32)
+ 189 0012 8927      		eor r24,r25
+ 190 0014 85B9      		out 0x5,r24
+ 191               	/* epilogue start */
+  37:main.c        **** }
+ 193               	.LM12:
+ 194 0016 9F91      		pop r25
+ 195 0018 8F91      		pop r24
+ 196 001a 0F90      		pop r0
+ 197 001c 0FBE      		out __SREG__,r0
+ 198 001e 0F90      		pop r0
+ 199 0020 1F90      		pop r1
+ 200 0022 1895      		reti
+ 202               	.Lscope2:
+ 204               		.stabd	78,0,0
+ 206               	.global	__vector_13
+ 208               	__vector_13:
+ 209               		.stabd	46,0,0
+  38:main.c        **** 
+  39:main.c        **** ISR(TIMER1_OVF_vect)  //interrupção do TIMER1
+  40:main.c        **** {
+ 211               	.LM13:
+ 212               	.LFBB3:
+ 213 0024 1F92      		push r1
+ 214 0026 0F92      		push r0
+ 215 0028 0FB6      		in r0,__SREG__
+ 216 002a 0F92      		push r0
+ 217 002c 1124      		clr __zero_reg__
+ 218 002e 8F93      		push r24
+ 219 0030 9F93      		push r25
+ 220               	/* prologue: Signal */
+ 221               	/* frame size = 0 */
+ 222               	/* stack size = 5 */
+ 223               	.L__stack_usage = 5
+  41:main.c        ****   TCNT1 = 0xC2F7;     // Renicia TIMER
+ 225               	.LM14:
+ 226 0032 87EF      		ldi r24,lo8(-9)
+ 227 0034 92EC      		ldi r25,lo8(-62)
+ 228 0036 9093 8500 		sts 132+1,r25
+ 229 003a 8093 8400 		sts 132,r24
+  42:main.c        ****   PORTB ^= (1<<5);		//Use xor to toggle the LED
+ 231               	.LM15:
+ 232 003e 95B1      		in r25,0x5
+ 233 0040 80E2      		ldi r24,lo8(32)
+ 234 0042 8927      		eor r24,r25
+ 235 0044 85B9      		out 0x5,r24
+ 236               	/* epilogue start */
+  43:main.c        **** }
+ 238               	.LM16:
+ 239 0046 9F91      		pop r25
+ 240 0048 8F91      		pop r24
+ 241 004a 0F90      		pop r0
+ 242 004c 0FBE      		out __SREG__,r0
+ 243 004e 0F90      		pop r0
+ 244 0050 1F90      		pop r1
+ 245 0052 1895      		reti
+ 247               	.Lscope3:
+ 249               		.stabd	78,0,0
+ 251               	.Letext0:
+ 252               		.ident	"GCC: (GNU) 5.4.0"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccgeN7AJ.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccgeN7AJ.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccgeN7AJ.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccgeN7AJ.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccgeN7AJ.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccgeN7AJ.s:108    .text.startup:0000000000000000 main
+     /tmp/ccgeN7AJ.s:169    .text:0000000000000000 __vector_11
+     /tmp/ccgeN7AJ.s:208    .text:0000000000000024 __vector_13
+
+NO UNDEFINED SYMBOLS

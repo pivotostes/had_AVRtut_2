@@ -15,7 +15,9 @@
 # MCU = attiny13
 # MCU = attiny2313
 # MCU = atmega8
-MCU = atmega168
+# MCU = atmega168
+MCU = atmega328p 
+
 
 # Target file name (without extension).
 TARGET = main

@@ -1,0 +1,9 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "files.associations": {
+        "interrupt.h": "c",
+        "io.h": "c",
+        "iom168.h": "c",
+        "iom328p.h": "c"
+    }
+}
